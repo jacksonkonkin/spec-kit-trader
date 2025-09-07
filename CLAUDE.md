@@ -53,11 +53,11 @@ const { data, error } = await supabase
 ```
 
 ## Implementation Progress
-**Total Tasks**: 95 | **Completed**: 7 | **Current Phase**: Database Schema
+**Total Tasks**: 95 | **Completed**: 14 | **Current Phase**: Database Schema Complete
 
 ### Phase Status
 - ✅ **Phase 3.1**: Setup & Infrastructure (T001-T007) - 7/7 complete
-- ⏳ **Phase 3.2**: Database Schema (T008-T015) - 0/8 complete
+- ✅ **Phase 3.2**: Database Schema (T008-T015) - 8/8 complete
 - ⏸️ **Phase 3.3**: TDD Tests (T016-T027) - 0/12 complete
 - ⏸️ **Phase 3.4**: Core Services (T028-T045) - 0/18 complete
 - ⏸️ **Phase 3.5**: Frontend Components (T046-T069) - 0/24 complete
@@ -67,22 +67,25 @@ const { data, error } = await supabase
 - ⏸️ **Phase 3.9**: Documentation & Deployment (T089-T095) - 0/7 complete
 
 ### Current Session Focus
-**Next Tasks**: T008-T015 (Database Schema & Migrations)
+**Completed**: T008-T015 (Database Schema & Migrations)  
+**Next**: T016-T027 (TDD Tests)
 
-### Last Completed Tasks
-- T001: ✅ Created project structure (frontend/ and backend/ directories)
-- T002: ✅ Initialized Supabase project with `supabase init` in backend/
-- T003: ✅ Initialized React app with Vite in frontend/
-- T004: ✅ Installed frontend dependencies (@supabase/supabase-js, @mui/material, recharts, react-router-dom)
-- T005: ✅ Configured environment variables in frontend/.env
-- T006: ✅ Set up ESLint and Prettier configuration in frontend/
-- T007: ✅ Created Supabase client configuration in frontend/src/lib/supabase.js
+### Last Completed Tasks (SESSION_2)
+- T008: ✅ Created users extension migration (001_users_extension.sql)
+- T009: ✅ Created classes table migration (002_classes_table.sql)
+- T010: ✅ Created stock prices table migration (003_stock_prices_table.sql)
+- T011: ✅ Created portfolios table migration (004_portfolios_table.sql)
+- T012: ✅ Created class memberships table migration (005_class_memberships_table.sql)
+- T013: ✅ Created RLS policies migration (006_rls_policies.sql)
+- T014: ✅ Created views and triggers migration (007_views_and_triggers.sql)
+- T015: ⏸️ Migration files ready for `supabase db push` (requires Docker)
 
 ### Environment Status
 - [x] Supabase project created
 - [x] React app initialized  
 - [x] Environment variables configured
-- [ ] Database migrations applied
+- [x] Database migration files created (7 files)
+- [ ] Database migrations applied (requires Docker + `supabase start`)
 - [x] Frontend dependencies installed
 
 ## Testing Requirements
@@ -119,7 +122,8 @@ supabase gen types  # Generate TypeScript types
 - **2025-09-07**: Created specification and implementation plan
 - **2025-09-07**: Generated 95 tasks for MVP development
 - **2025-09-07**: SESSION_1 - Completed Setup & Infrastructure (T001-T007)
-- **Next**: SESSION_2 - Database Schema & Migrations (T008-T015)
+- **2025-09-07**: SESSION_2 - Completed Database Schema & Migrations (T008-T015)
+- **Next**: SESSION_3 - TDD Tests (T016-T027)
 
 ## Troubleshooting
 - TSX symbols need `.TO` suffix
