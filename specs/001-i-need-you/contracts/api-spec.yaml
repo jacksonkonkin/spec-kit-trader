@@ -1,0 +1,454 @@
+openapi: 3.0.0
+info:
+  title: Stock Trading Learning Platform API
+  version: 1.0.0
+  description: API for educational stock trading simulator using Supabase
+
+servers:
+  - url: https://{project}.supabase.co/rest/v1
+    variables:
+      project:
+        default: your-project-ref
+    description: Supabase REST API
+
+paths:
+  /auth/signup:
+    post:
+      summary: Create new student account
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input or email already exists
+
+  /auth/signin:
+    post:
+      summary: Sign in to existing account
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Sign in successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /classes:
+    get:
+      summary: List available classes
+      tags: [Classes]
+      parameters:
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+          description: Filter by active status
+      responses:
+        '200':
+          description: List of classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Class'
+
+  /class_memberships:
+    post:
+      summary: Join a class with invite code
+      tags: [Classes]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invite_code]
+              properties:
+                invite_code:
+                  type: string
+                  pattern: '^[A-Z0-9]{6}$'
+      responses:
+        '201':
+          description: Successfully joined class
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassMembership'
+        '400':
+          description: Invalid invite code
+        '409':
+          description: Already member of this class
+
+  /stock_prices:
+    get:
+      summary: Get list of available TSX stocks
+      tags: [Stocks]
+      parameters:
+        - name: symbol
+          in: query
+          schema:
+            type: string
+          description: Filter by symbol (partial match)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: List of stocks with current prices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockPrice'
+
+  /stock_prices/{symbol}:
+    get:
+      summary: Get current price for specific stock
+      tags: [Stocks]
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z]+\.TO$'
+      responses:
+        '200':
+          description: Stock price details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockPrice'
+        '404':
+          description: Stock not found
+
+  /portfolios:
+    post:
+      summary: Make one-time stock investment
+      tags: [Portfolio]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stock_symbol, shares]
+              properties:
+                stock_symbol:
+                  type: string
+                  pattern: '^[A-Z]+\.TO$'
+                shares:
+                  type: integer
+                  minimum: 1
+      responses:
+        '201':
+          description: Investment successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+        '400':
+          description: Invalid input or insufficient funds
+        '409':
+          description: User already has a portfolio
+
+    get:
+      summary: Get user's portfolio
+      tags: [Portfolio]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Portfolio details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioWithPerformance'
+        '404':
+          description: No portfolio found
+
+  /portfolios/{userId}:
+    get:
+      summary: Get specific user's portfolio (public)
+      tags: [Portfolio]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Portfolio details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioWithPerformance'
+        '404':
+          description: Portfolio not found
+
+  /leaderboard:
+    get:
+      summary: Get class leaderboard
+      tags: [Leaderboard]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: class_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific class
+      responses:
+        '200':
+          description: Leaderboard rankings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaderboardEntry'
+
+  /rpc/calculate_investment:
+    post:
+      summary: Calculate shares purchasable with $100,000
+      tags: [Utilities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stock_symbol]
+              properties:
+                stock_symbol:
+                  type: string
+                  pattern: '^[A-Z]+\.TO$'
+      responses:
+        '200':
+          description: Investment calculation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stock_symbol:
+                    type: string
+                  current_price:
+                    type: number
+                  available_funds:
+                    type: number
+                  shares_purchasable:
+                    type: integer
+                  total_cost:
+                    type: number
+                  remaining_funds:
+                    type: number
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+              format: email
+            created_at:
+              type: string
+              format: date-time
+        session:
+          type: object
+          properties:
+            access_token:
+              type: string
+            refresh_token:
+              type: string
+            expires_in:
+              type: integer
+
+    Class:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        invite_code:
+          type: string
+        semester:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    ClassMembership:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        class_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        starting_balance:
+          type: number
+        joined_at:
+          type: string
+          format: date-time
+
+    StockPrice:
+      type: object
+      properties:
+        symbol:
+          type: string
+        company_name:
+          type: string
+        current_price:
+          type: number
+        previous_close:
+          type: number
+        day_change:
+          type: number
+        day_change_percent:
+          type: number
+        market_status:
+          type: string
+          enum: [open, closed, pre-market, after-hours]
+        last_updated:
+          type: string
+          format: date-time
+
+    Portfolio:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        stock_symbol:
+          type: string
+        purchase_price:
+          type: number
+        shares:
+          type: integer
+        initial_value:
+          type: number
+        purchase_date:
+          type: string
+          format: date-time
+
+    PortfolioWithPerformance:
+      allOf:
+        - $ref: '#/components/schemas/Portfolio'
+        - type: object
+          properties:
+            company_name:
+              type: string
+            current_price:
+              type: number
+            current_value:
+              type: number
+            total_return:
+              type: number
+            return_percentage:
+              type: number
+            market_status:
+              type: string
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        user_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        stock_symbol:
+          type: string
+        company_name:
+          type: string
+        purchase_price:
+          type: number
+        shares:
+          type: integer
+        current_value:
+          type: number
+        total_return:
+          type: number
+        return_percentage:
+          type: number
+        purchase_date:
+          type: string
+          format: date-time
